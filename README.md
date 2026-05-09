@@ -5,13 +5,13 @@ Script cài đặt node V2board tự động cho **V2bX**, **v2node**, và **Xra
 ## ⚡ Cài đặt nhanh
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpnnga-installer/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/huzgnm/vpn-installer/main/install.sh)
 ```
 
 Hoặc nếu server không có `curl`:
 
 ```bash
-bash <(wget -qO- https://raw.githubusercontent.com/YOUR_USERNAME/vpnnga-installer/main/install.sh)
+bash <(wget -qO- https://raw.githubusercontent.com/huzgnm/vpn-installer/main/install.sh)
 ```
 
 ## 🎯 Tính năng
@@ -21,13 +21,12 @@ bash <(wget -qO- https://raw.githubusercontent.com/YOUR_USERNAME/vpnnga-installe
   - `v2node` — Xray-core thuần, **đơn giản nhất** (panel quản lý 100%)
   - `XrayR` — cổ điển, cấu hình Reality/cert ngay tại node
 
-- **6 giao thức:**
-  - VLESS + Reality (no domain needed)
-  - VLESS + Vision/TLS
-  - Trojan + TLS
-  - Shadowsocks-2022
-  - Vmess + WebSocket + TLS
-  - Hysteria2 (V2bX/v2node only)
+- **5 loại node với logic hỏi TLS thông minh:**
+  - `VLESS` → hỏi tiếp Reality (no cert) hay Vision/TLS (có cert)
+  - `Vmess` → hỏi tiếp WS+TLS (có cert) hay raw (no cert)
+  - `Trojan` → luôn TLS (hỏi cert)
+  - `Shadowsocks` → không TLS, không hỏi cert
+  - `Hysteria2` → luôn TLS (hỏi cert, V2bX/v2node only)
 
 - **3 cách xin SSL cert:**
   - HTTP challenge (cần port 80 free)
@@ -67,7 +66,7 @@ bash <(wget -qO- https://raw.githubusercontent.com/YOUR_USERNAME/vpnnga-installe
 ### Bước 2: SSH vào server và chạy 1 lệnh
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpnnga-installer/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/huzgnm/vpn-installer/main/install.sh)
 ```
 
 ### Bước 3: Trả lời các câu hỏi của script
@@ -112,17 +111,41 @@ Provider [1-4]: 1
   CF Global API Key: d4a35a671e8cf6...
 ```
 
-## 🛠 Lệnh quản lý sau khi cài
+## 🛠 Quản lý sau khi cài
+
+Script tự động cài luôn lệnh **`vpnnga`** — gõ là vào menu quản lý đẹp:
+
+```bash
+vpnnga              # mở menu
+vpnnga start        # bật service
+vpnnga stop         # tắt service
+vpnnga restart      # restart
+vpnnga status       # xem trạng thái
+vpnnga log          # log realtime
+vpnnga monitor      # theo dõi RAM/CPU
+vpnnga add          # thêm node mới (chạy lại installer)
+vpnnga config       # xem config
+vpnnga edit         # sửa config (nano)
+vpnnga update       # cập nhật core
+vpnnga backup       # backup config → /root/vpnnga-backups/
+vpnnga restore      # khôi phục từ backup
+vpnnga bbr          # bật BBR + tối ưu mạng
+vpnnga ports        # xem IP & port đang mở
+vpnnga uninstall    # gỡ toàn bộ
+vpnnga help         # xem hướng dẫn
+```
+
+Hoặc dùng lệnh gốc của tác giả core:
 
 ```bash
 # V2bX
-V2bX start | stop | restart | status | log
+V2bX start | stop | restart | status | log | x25519 | update
 
 # v2node
-v2node start | stop | restart | status | log
+v2node start | stop | restart | status | log | update | generate
 
 # XrayR
-XrayR start | stop | restart | status | log
+xrayr start | stop | restart | status | log
 ```
 
 ## 📁 Đường dẫn config

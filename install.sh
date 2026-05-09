@@ -8,7 +8,7 @@
 set -o pipefail
 
 # ===== Màu sắc =====
-R='\033[0;31m'; G='\033[0;32m'; Y='\033[0;33m'; B='\033[0;36m'; W='\033[1m'; N='\033[0m'
+R='\033[0;31m'; G='\033[0;32m'; Y='\033[0;33m'; B='\033[0;36m'; W='\033[1m'; D='\033[2m'; N='\033[0m'
 ok()   { echo -e "${G}[✓]${N} $1"; }
 err()  { echo -e "${R}[✗]${N} $1"; }
 warn() { echo -e "${Y}[!]${N} $1"; }
@@ -162,34 +162,75 @@ if [[ "$CORE" == "v2node" ]]; then
     info "→ Đảm bảo node đã được tạo và cấu hình đầy đủ trên panel admin"
     NODE_TYPE="auto"; VARIANT="auto"; NEED_CERT=0
 else
-    # V2bX và XrayR cần biết loại node để ghi config tương ứng
+    # V2bX và XrayR: hỏi 2 bước — loại node, rồi mới hỏi TLS/cert nếu cần
     echo ""
-    info "Loại node (chỉ chọn loại - tham số chi tiết quản lý ở panel):"
-    echo "  1) VLESS + Reality      ${B}(không cần domain, panel push key)${N}"
-    echo "  2) VLESS + Vision/TLS   ${B}(cần domain + cert)${N}"
-    echo "  3) Trojan + TLS         ${B}(cần domain + cert)${N}"
-    echo "  4) Shadowsocks(-2022)   ${B}(không cần domain)${N}"
-    echo "  5) Vmess + WS + TLS     ${B}(cần domain + cert)${N}"
-    echo "  6) Hysteria2            ${B}(V2bX only, cần domain + cert)${N}"
-    read -rp "Chọn [1-6]: " proto
+    info "Loại node:"
+    echo "  1) VLESS"
+    echo "  2) Vmess"
+    echo "  3) Trojan         ${B}(luôn dùng TLS)${N}"
+    echo "  4) Shadowsocks    ${B}(không cần TLS)${N}"
+    echo "  5) Hysteria2      ${B}(luôn dùng TLS, V2bX only)${N}"
+    read -rp "Chọn [1-5]: " proto
 
     case $proto in
-        1) NODE_TYPE="vless";       VARIANT="reality";    NEED_CERT=0 ;;
-        2) NODE_TYPE="vless";       VARIANT="vision_tls"; NEED_CERT=1 ;;
-        3) NODE_TYPE="trojan";      VARIANT="tls";        NEED_CERT=1 ;;
-        4) NODE_TYPE="shadowsocks"; VARIANT="ss";         NEED_CERT=0 ;;
-        5) NODE_TYPE="vmess";       VARIANT="ws_tls";     NEED_CERT=1 ;;
-        6) NODE_TYPE="hysteria2";   VARIANT="hy2";        NEED_CERT=1
+        1) NODE_TYPE="vless" ;;
+        2) NODE_TYPE="vmess" ;;
+        3) NODE_TYPE="trojan" ;;
+        4) NODE_TYPE="shadowsocks" ;;
+        5) NODE_TYPE="hysteria2"
            [[ "$CORE" == "xrayr" ]] && { err "XrayR không hỗ trợ Hysteria2"; exit 1; } ;;
         *) err "Lựa chọn không hợp lệ"; exit 1 ;;
     esac
 
-    # Hỏi cert config nếu cần
-    if [[ $NEED_CERT -eq 1 ]]; then
-        read -rp "Domain: " DOMAIN
-        [[ -z "$DOMAIN" ]] && { err "Cần domain"; exit 1; }
+    # Quyết định có cần TLS hay không
+    NEED_CERT=0
+    VARIANT="$NODE_TYPE"   # default
 
-        [[ "$VARIANT" == "ws_tls" ]] && { read -rp "WebSocket path [/vmess]: " WS_PATH; WS_PATH=${WS_PATH:-/vmess}; }
+    case $NODE_TYPE in
+        trojan|hysteria2)
+            # Luôn TLS
+            NEED_CERT=1
+            VARIANT="$NODE_TYPE"
+            ;;
+        shadowsocks)
+            # Không TLS
+            NEED_CERT=0
+            VARIANT="ss"
+            ;;
+        vless)
+            # Hỏi: Reality hay TLS?
+            echo ""
+            info "VLESS dùng kiểu nào?"
+            echo "  1) Reality        ${B}(không cần domain/cert, panel push key)${N}"
+            echo "  2) TLS (Vision)   ${B}(cần domain + cert)${N}"
+            read -rp "Chọn [1-2]: " vsub
+            case $vsub in
+                1) VARIANT="reality"; NEED_CERT=0 ;;
+                2) VARIANT="vision_tls"; NEED_CERT=1 ;;
+                *) err "Sai"; exit 1 ;;
+            esac
+            ;;
+        vmess)
+            # Hỏi: WS+TLS hay raw?
+            echo ""
+            info "Vmess dùng transport nào?"
+            echo "  1) WebSocket + TLS ${B}(cần domain + cert, qua CDN được)${N}"
+            echo "  2) TCP raw          ${B}(không cần TLS - không khuyến nghị)${N}"
+            read -rp "Chọn [1-2]: " vmsub
+            case $vmsub in
+                1) VARIANT="ws_tls"; NEED_CERT=1
+                   read -rp "WebSocket path [/vmess]: " WS_PATH
+                   WS_PATH=${WS_PATH:-/vmess} ;;
+                2) VARIANT="raw"; NEED_CERT=0 ;;
+                *) err "Sai"; exit 1 ;;
+            esac
+            ;;
+    esac
+
+    # Hỏi cert config CHỈ khi cần TLS
+    if [[ $NEED_CERT -eq 1 ]]; then
+        read -rp "Domain (ví dụ: node.vpnnga.com): " DOMAIN
+        [[ -z "$DOMAIN" ]] && { err "Cần domain"; exit 1; }
 
         echo ""
         info "Cách xin cert SSL:"
@@ -281,11 +322,11 @@ write_config_v2bx_style() {
         reality)
             cert_block='"CertConfig": { "CertMode": "reality" }'
             ;;
-        ss)
-            # Shadowsocks không cần CertConfig
+        ss|raw)
+            # Shadowsocks và Vmess raw không cần CertConfig
             cert_block=""
             ;;
-        vision_tls|tls|ws_tls|hy2)
+        vision_tls|trojan|ws_tls|hysteria2)
             case $CERT_MODE in
                 http)
                     cert_block=$(cat <<EOF
@@ -335,7 +376,7 @@ EOF
 
     # Core type: xray cho vless/vmess/trojan, sing cho ss-2022/hy2 (V2bX khuyến nghị)
     local core_type="xray"
-    [[ "$VARIANT" == "hy2" ]] && core_type="hysteria2"
+    [[ "$VARIANT" == "hysteria2" ]] && core_type="hysteria2"
 
     # Backup config cũ
     [[ -f "$CFG_DIR/config.json" ]] && cp "$CFG_DIR/config.json" "$CFG_DIR/config.json.bak.$(date +%s)"
@@ -384,7 +425,7 @@ EOF
 
     # Cores section: chỉ xray nếu không có hy2, có cả xray+hysteria2 nếu cần
     local cores_section
-    if [[ "$VARIANT" == "hy2" ]]; then
+    if [[ "$VARIANT" == "hysteria2" ]]; then
         cores_section=$(cat <<'EOF'
 [
         {
@@ -723,6 +764,18 @@ fi
 ok "BBR: $(sysctl -n net.ipv4.tcp_congestion_control)"
 
 # =====================================================================
+#  CÀI VPNNGA MANAGER (lệnh `vpnnga`)
+# =====================================================================
+step "Cài VPNNGA Manager (lệnh: vpnnga)..."
+if wget -qO /usr/local/bin/vpnnga \
+    https://raw.githubusercontent.com/huzgnm/vpn-installer/main/vpnnga.sh; then
+    chmod +x /usr/local/bin/vpnnga
+    ok "Đã cài lệnh: vpnnga"
+else
+    warn "Không tải được vpnnga.sh — bỏ qua menu manager"
+fi
+
+# =====================================================================
 #  TÓM TẮT
 # =====================================================================
 SERVER_IP=$(curl -s4 --max-time 5 ifconfig.me 2>/dev/null || echo "unknown")
@@ -739,11 +792,19 @@ echo -e "  Node ID:     ${W}$NODE_ID${N}"
 echo -e "  Loại node:   ${W}$NODE_TYPE / $VARIANT${N}"
 [[ -n "$DOMAIN" ]] && echo -e "  Domain:      ${W}$DOMAIN${N}"
 echo ""
-echo -e "  Lệnh quản lý:"
+echo -e "${W}  💡 Quản lý nhanh:${N}"
+echo -e "    ${G}vpnnga${N}            ${D}# mở menu quản lý đẹp${N}"
+echo -e "    ${G}vpnnga start${N}      ${D}# bật service${N}"
+echo -e "    ${G}vpnnga restart${N}    ${D}# restart${N}"
+echo -e "    ${G}vpnnga log${N}        ${D}# xem log realtime${N}"
+echo -e "    ${G}vpnnga backup${N}     ${D}# backup config${N}"
+echo -e "    ${G}vpnnga help${N}       ${D}# xem tất cả lệnh${N}"
+echo ""
+echo -e "  Lệnh gốc của tác giả core (nếu thích):"
 case $CORE in
-    v2bx)   echo -e "    ${B}V2bX${N} {start|stop|restart|status|log}" ;;
-    v2node) echo -e "    ${B}v2node${N} {start|stop|restart|status|log}" ;;
-    xrayr)  echo -e "    ${B}XrayR${N} {start|stop|restart|status|log}" ;;
+    v2bx)   echo -e "    ${B}V2bX${N} {start|stop|restart|status|log|x25519|update}" ;;
+    v2node) echo -e "    ${B}v2node${N} {start|stop|restart|status|log|update}" ;;
+    xrayr)  echo -e "    ${B}xrayr${N} {start|stop|restart|status|log}" ;;
 esac
 echo ""
 [[ "$VARIANT" == "reality" && "$CORE" == "xrayr" ]] && warn "→ Copy publicKey ở trên vào panel"
