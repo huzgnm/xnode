@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# VPNNGA Node Manager - Menu quản lý node sau khi cài
-# Lệnh: vpnnga
+# XNode Manager - Menu quản lý node sau khi cài
+# Lệnh: xnode
 #
 
 # ===== Màu sắc =====
@@ -15,12 +15,12 @@ info() { echo -e "${B}[i]${N} $1"; }
 step() { echo -e "${W}▸${N} $1"; }
 
 # ===== Check root =====
-[[ $EUID -ne 0 ]] && { err "Cần root: sudo vpnnga"; exit 1; }
+[[ $EUID -ne 0 ]] && { err "Cần root: sudo xnode"; exit 1; }
 
 VERSION="1.0.0"
-LOCK_FILE="/etc/vpnnga/installed.lock"
-BACKUP_DIR="/root/vpnnga-backups"
-INSTALLER_URL="https://raw.githubusercontent.com/huzgnm/vpn-installer/main/install.sh"
+LOCK_FILE="/etc/xnode/installed.lock"
+BACKUP_DIR="/root/xnode-backups"
+INSTALLER_URL="https://raw.githubusercontent.com/huzgnm/xnode/main/install.sh"
 
 # ===== Phát hiện core đã cài =====
 detect_core() {
@@ -77,9 +77,9 @@ show_banner() {
     clear
     echo -e "${B}"
     cat <<'EOF'
- ╦  ╦╔═╗╔╗╔╔╗╔╔═╗╔═╗  ╔╦╗╔═╗╔╗╔╔═╗╔═╗╔═╗╦═╗
- ╚╗╔╝╠═╝║║║║║║║ ╦╠═╣  ║║║╠═╣║║║╠═╣║ ╦║╣ ╠╦╝
-  ╚╝ ╩  ╝╚╝╝╚╝╚═╝╩ ╩  ╩ ╩╩ ╩╝╚╝╩ ╩╚═╝╚═╝╩╚═
+ ═╗ ╦╔╗╔╔═╗╔╦╗╔═╗  ╔╦╗╔═╗╔╗╔╔═╗╔═╗╔═╗╦═╗
+  ╔╩╦╝║║║║ ║ ║║║╣   ║║║╠═╣║║║╠═╣║ ╦║╣ ╠╦╝
+ ╩ ╚═╝╝╚╝╚═╝═╩╝╚═╝  ╩ ╩╩ ╩╝╚╝╩ ╩╚═╝╚═╝╩╚═
 EOF
     echo -e "${N}"
 
@@ -219,7 +219,7 @@ action_backup() {
 
     mkdir -p "$BACKUP_DIR"
     local stamp=$(date +%Y%m%d_%H%M%S)
-    local file="$BACKUP_DIR/vpnnga-${core}-${stamp}.tar.gz"
+    local file="$BACKUP_DIR/xnode-${core}-${stamp}.tar.gz"
 
     local cfg_dir=$(get_config_dir $core)
     step "Backup $cfg_dir → $file"
@@ -269,11 +269,11 @@ action_bbr() {
 
     step "Bật BBR + fq_codel..."
     # Xóa cấu hình cũ nếu có
-    sed -i '/^# vpnnga tuning/,/^# end vpnnga/d' /etc/sysctl.conf
+    sed -i '/^# xnode tuning/,/^# end xnode/d' /etc/sysctl.conf
 
     cat >> /etc/sysctl.conf <<'EOF'
 
-# vpnnga tuning
+# xnode tuning
 net.core.default_qdisc = fq_codel
 net.ipv4.tcp_congestion_control = bbr
 net.ipv4.tcp_fastopen = 3
@@ -281,7 +281,7 @@ net.core.rmem_max = 67108864
 net.core.wmem_max = 67108864
 net.ipv4.tcp_rmem = 4096 87380 67108864
 net.ipv4.tcp_wmem = 4096 65536 67108864
-# end vpnnga
+# end xnode
 EOF
     sysctl -p &>/dev/null
     local new=$(sysctl -n net.ipv4.tcp_congestion_control)
@@ -326,11 +326,11 @@ action_uninstall() {
 
     systemctl daemon-reload
     ok "Đã gỡ sạch"
-    info "Để gỡ luôn lệnh vpnnga: rm /usr/local/bin/vpnnga"
+    info "Để gỡ luôn lệnh xnode: rm /usr/local/bin/xnode"
 }
 
 # =====================================================================
-#  CLI MODE — gọi trực tiếp: vpnnga start | stop | restart | log...
+#  CLI MODE — gọi trực tiếp: xnode start | stop | restart | log...
 # =====================================================================
 if [[ -n "$1" ]]; then
     case $1 in
@@ -349,30 +349,30 @@ if [[ -n "$1" ]]; then
         bbr)       action_bbr ;;
         ports)     action_check_ports ;;
         uninstall) action_uninstall ;;
-        version|-v|--version) echo "vpnnga v$VERSION" ;;
+        version|-v|--version) echo "xnode v$VERSION" ;;
         help|-h|--help)
             cat <<EOF
-VPNNGA Node Manager v$VERSION
+XNode Manager v$VERSION
 
 Cách dùng:
-  vpnnga                    # mở menu
-  vpnnga start | stop       # bật/tắt service
-  vpnnga restart | status   # restart hoặc xem trạng thái
-  vpnnga log                # xem log realtime
-  vpnnga monitor            # theo dõi RAM/CPU
-  vpnnga add                # thêm node mới
-  vpnnga config             # xem config
-  vpnnga edit               # sửa config (nano/vi)
-  vpnnga update             # cập nhật core
-  vpnnga backup             # backup config
-  vpnnga restore            # khôi phục backup
-  vpnnga bbr                # bật BBR
-  vpnnga ports              # xem port đang mở
-  vpnnga uninstall          # gỡ toàn bộ
-  vpnnga version            # xem version
+  xnode                    # mở menu
+  xnode start | stop       # bật/tắt service
+  xnode restart | status   # restart hoặc xem trạng thái
+  xnode log                # xem log realtime
+  xnode monitor            # theo dõi RAM/CPU
+  xnode add                # thêm node mới
+  xnode config             # xem config
+  xnode edit               # sửa config (nano/vi)
+  xnode update             # cập nhật core
+  xnode backup             # backup config
+  xnode restore            # khôi phục backup
+  xnode bbr                # bật BBR
+  xnode ports              # xem port đang mở
+  xnode uninstall          # gỡ toàn bộ
+  xnode version            # xem version
 EOF
             ;;
-        *) err "Lệnh không biết: $1 (chạy 'vpnnga help' để xem)"; exit 1 ;;
+        *) err "Lệnh không biết: $1 (chạy 'xnode help' để xem)"; exit 1 ;;
     esac
     exit $?
 fi
