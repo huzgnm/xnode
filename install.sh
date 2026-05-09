@@ -106,13 +106,11 @@ fi
 #  PHẦN 2: CHỌN CORE
 # =====================================================================
 echo ""; echo -e "${W}=== Bước 2/4: Chọn core ===${N}"
-cat <<EOF
-
-  ${G}1)${N} ${W}V2bX${N}    - Đa core, mạnh nhất, cấu hình node tại server (Cores+CertConfig)
-  ${G}2)${N} ${W}v2node${N}  - Xray-core thuần, ${G}đơn giản nhất${N} - panel quản lý 100% (chỉ cần API info)
-  ${G}3)${N} ${W}XrayR${N}   - Cổ điển, cấu hình Reality/cert ngay tại node
-
-EOF
+echo ""
+echo -e "  ${G}1)${N} ${W}V2bX${N}    - Đa core, mạnh nhất, cấu hình node tại server (Cores+CertConfig)"
+echo -e "  ${G}2)${N} ${W}v2node${N}  - Xray-core thuần, ${G}đơn giản nhất${N} - panel quản lý 100% (chỉ cần API info)"
+echo -e "  ${G}3)${N} ${W}XrayR${N}   - Cổ điển, cấu hình Reality/cert ngay tại node"
+echo ""
 read -rp "Chọn [1-3]: " core_choice
 
 case $core_choice in
@@ -167,9 +165,9 @@ else
     info "Loại node:"
     echo "  1) VLESS"
     echo "  2) Vmess"
-    echo "  3) Trojan         ${B}(luôn dùng TLS)${N}"
-    echo "  4) Shadowsocks    ${B}(không cần TLS)${N}"
-    echo "  5) Hysteria2      ${B}(luôn dùng TLS, V2bX only)${N}"
+    echo -e "  3) Trojan         ${B}(luôn dùng TLS)${N}"
+    echo -e "  4) Shadowsocks    ${B}(không cần TLS)${N}"
+    echo -e "  5) Hysteria2      ${B}(luôn dùng TLS, V2bX only)${N}"
     read -rp "Chọn [1-5]: " proto
 
     case $proto in
@@ -201,8 +199,8 @@ else
             # Hỏi: Reality hay TLS?
             echo ""
             info "VLESS dùng kiểu nào?"
-            echo "  1) Reality        ${B}(không cần domain/cert, panel push key)${N}"
-            echo "  2) TLS (Vision)   ${B}(cần domain + cert)${N}"
+            echo -e "  1) Reality        ${B}(không cần domain/cert, panel push key)${N}"
+            echo -e "  2) TLS (Vision)   ${B}(cần domain + cert)${N}"
             read -rp "Chọn [1-2]: " vsub
             case $vsub in
                 1) VARIANT="reality"; NEED_CERT=0 ;;
@@ -214,8 +212,8 @@ else
             # Hỏi: WS+TLS hay raw?
             echo ""
             info "Vmess dùng transport nào?"
-            echo "  1) WebSocket + TLS ${B}(cần domain + cert, qua CDN được)${N}"
-            echo "  2) TCP raw          ${B}(không cần TLS - không khuyến nghị)${N}"
+            echo -e "  1) WebSocket + TLS ${B}(cần domain + cert, qua CDN được)${N}"
+            echo -e "  2) TCP raw          ${B}(không cần TLS - không khuyến nghị)${N}"
             read -rp "Chọn [1-2]: " vmsub
             case $vmsub in
                 1) VARIANT="ws_tls"; NEED_CERT=1
