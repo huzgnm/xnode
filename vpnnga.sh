@@ -383,31 +383,29 @@ fi
 while true; do
     show_banner
 
-    cat <<EOF
-${W}🚀 QUẢN LÝ SERVER${N}
-   1. Bật
-   2. Tắt
-   3. Khởi động lại
-   4. Xem trạng thái
-   5. Xem log realtime
-   6. Theo dõi RAM/CPU
-
-${W}⚙️  CẤU HÌNH NODE${N}
-   7. Thêm node mới
-   8. Xem config hiện tại
-   9. Sửa config (nano)
-
-${W}🔧 HỆ THỐNG${N}
-   10. Cập nhật core
-   11. ${G}Backup config${N}
-   12. ${Y}Khôi phục backup${N}
-   13. ⚡ Bật BBR + tối ưu mạng
-   14. Xem IP & port đang mở
-
-   ${R}99. ⚠️  Gỡ toàn bộ${N}
-    0. Thoát
-
-EOF
+    printf '%b\n' "${W}🚀 QUẢN LÝ SERVER${N}"
+    echo "   1. Bật"
+    echo "   2. Tắt"
+    echo "   3. Khởi động lại"
+    echo "   4. Xem trạng thái"
+    echo "   5. Xem log realtime"
+    echo "   6. Theo dõi RAM/CPU"
+    echo ""
+    printf '%b\n' "${W}⚙️  CẤU HÌNH NODE${N}"
+    echo "   7. Thêm node mới"
+    echo "   8. Xem config hiện tại"
+    echo "   9. Sửa config (nano)"
+    echo ""
+    printf '%b\n' "${W}🔧 HỆ THỐNG${N}"
+    echo "   10. Cập nhật core"
+    printf '%b\n' "   11. ${G}Backup config${N}"
+    printf '%b\n' "   12. ${Y}Khôi phục backup${N}"
+    echo "   13. ⚡ Bật BBR + tối ưu mạng"
+    echo "   14. Xem IP & port đang mở"
+    echo ""
+    printf '%b\n' "   ${R}99. ⚠️  Gỡ toàn bộ${N}"
+    echo "    0. Thoát"
+    echo ""
     read -rp "Chọn [0-14, 99]: " c
     echo ""
     case $c in
