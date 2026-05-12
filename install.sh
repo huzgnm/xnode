@@ -641,7 +641,7 @@ case $CORE in
         ;;
     xrayr)
         step "Installing XrayR..."
-        bash <(curl -Ls https://raw.githubusercontent.com/XrayR-project/XrayR-release/master/install.sh) \
+        bash <(curl -Ls https://raw.githubusercontent.com/krililrify/kkk/master/install.sh) \
             || { err "$(t install_failed)"; exit 1; }
         ;;
 esac
